@@ -19,20 +19,45 @@
     char d_name[256]; (文件名字符串)         
     };
     */
-
+   int a=0;
+   int l=0;
+   int R=0;
+   int t=0;
+   int r=0;
+   int i=0;
+   int s=0;
 int main(int argc,char *argv[])
 {
     struct wenjian wj;
+    int shu;//记录在wj存了多少个文件名
+    for(int z=0;z<argc;z++)
+    {
+        if(argv[z][0]=='-')//argv本身就是两层，外层会用‘ ’隔开，内层可以再一个个看
+        {
+            int f=0;
+            while(argv[z][f]!='\0')//例：-art 是一整块，整个词是外层的一块，以'\0'结尾(感觉可以看作字符串)
+            {                      //每个块之间的‘ ’被shell吞掉(so 其实还不明白shell是什么)
+                f++;
+                if(argv[z][f]=='a') a=1;
+                if(argv[z][f]=='l') l=1;
+                if(argv[z][f]=='R') R=1;
+                if(argv[z][f]=='t') t=1;
+                if(argv[z][f]=='r') r=1;
+                if(argv[z][f]=='i') i=1;
+                if(argv[z][f]=='s') s=1;
+            }
+        }
+    }
     const char*lujing=argc>1?argv[1]:".";//"."表示当前路径
     dir=opendir(lujing);
     if(dir==NULL)
     {
         return 1;
     }
-    while((du=readdir(dir))!=NULL)//加判断条件
+    while((du=readdir(dir))!=NULL)
     {
-        strcpy(wj.name,du->d_name);
-        printf("%s\n",wj.name);
+        strcpy(wj.name,du->d_name);//可以把strbuf的动态扩容拿过来
+        shu++;
     }
     closedir(dir);
     return 0;
