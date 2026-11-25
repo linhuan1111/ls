@@ -1,6 +1,7 @@
 #include<stdio.h>//printf
 #include<dirent.h>//打开、读取、关闭文件
 #include<string.h>//strcpy（目标，来源），搬运字符串，带'\0'；对比memcpy（目标，来源，字节数）,不带'\0'
+#include<stdlib.h>//用strbuf了，realloc之类的
 //初始化什么呢？根据函数定义
     DIR *dir;//系统提前定义好的一个类型，代表"一个被打开的目录"的地址
     struct wenjian
@@ -26,10 +27,27 @@
    int r=0;
    int i=0;
    int s=0;
+
+   static size_t strbuf_next_alloc(size_t alloc, size_t need)
+{
+    if (alloc == 0)
+        alloc = 1;
+    while (alloc < need) 
+    {
+        if (alloc > ((size_t)-1) / 2) //防溢出
+        {
+            alloc = need;
+            break;
+        }
+        alloc *= 2;
+    }
+    return alloc;
+}
 int main(int argc,char *argv[])
 {
-    struct wenjian wj;
-    int shu;//记录在wj存了多少个文件名
+    struct wenjian *wj=NULL;
+    size_t alloc=0;
+    int shu=0;//记录在wj存了多少个文件名
     for(int z=0;z<argc;z++)
     {
         if(argv[z][0]=='-')//argv本身就是两层，外层会用‘ ’隔开，内层可以再一个个看
@@ -56,9 +74,23 @@ int main(int argc,char *argv[])
     }
     while((du=readdir(dir))!=NULL)
     {
-        strcpy(wj.name,du->d_name);//可以把strbuf的动态扩容拿过来
+        alloc=strbuf_next_alloc(alloc,shu+1);
+        struct wenjian *newbuf = (struct wenjian *)realloc(wj,alloc*sizeof(*wj));//realloc(要被重新分配的内存块，分配大小字节数)
+                                                                                //分配大小字节数：个数（size_t)*sizeof(类型)
+        if (newbuf == NULL)
+        {
+            return 1;
+        }
+        wj=newbuf;
+        strcpy(wj[shu].name,du->d_name);//可以把strbuf的动态扩容拿过来
+        
         shu++;
     }
     closedir(dir);
+    for(int j=0;j<shu;j++)
+    {
+        printf("%s\n",wj[j].name);
+    }
+    free(wj);
     return 0;
 }
