@@ -62,4 +62,75 @@ lstat()：查看符号链接本身。
 6.错误处理与资源管理:
 目录打不开、属性查询失败时，程序应报告错误并继续或退出。成功打开的目录应关闭；动态分配的内存也应释放。
 
-struct wenjian 
+### 查找文件信息
+
+头文件：<sys/types.h>，<sys/stat.h>，<unistd.h>
+
+stat函数返回与此命名文件有关的信息结构
+fstat函数获取已在描述符fields上打开文件的有关信息
+lstat函数类似于stat但是当命名的文件是一个符号链接时，lstat返回该符号链接的有关信息，而不是由该符号链接引用文件的信息。
+
+stat：获取链接文件的信息时，具有穿透能力，直接穿越链接文件，获取所被链接文件的信息。
+lstat：获取链接文件的信息，无穿透能力
+
+```
+int stat(const char *path, struct stat *buf);//不是要const类型，是保证不改内容
+int fstat(int filedes, struct stat *buf);
+int lstat(const char *path, struct stat *buf);
+```
+参数buf是指针，它指向一个用于保存文件描述信息的结构，由函数填写结构内容。即下面这个结构体的指针，根据现实情况变化
+
+```
+struct stat { 
+    dev_t         st_dev;       //文件的设备编号 
+    ino_t         st_ino;       //节点 
+    mode_t        st_mode;      //文件的类型和存取的权限 
+    nlink_t       st_nlink;     //连到该文件的硬连接数目，刚建立的文件值为1 
+    uid_t         st_uid;       //用户ID 
+    gid_t         st_gid;       //组ID 
+    dev_t         st_rdev;      //(设备类型)若此文件为设备文件，则为其设备编号 
+    off_t         st_size;      //文件字节数(文件大小) 
+    unsigned long st_blksize;   //块大小(文件系统的I/O 缓冲区大小) 
+    unsigned long st_blocks;    //块数 
+    time_t        st_atime;     //最后一次访问时间 
+    time_t        st_mtime;     //最后一次修改时间 
+    time_t        st_ctime;     //最后一次改变时间(指属性) 
+}; 
+```
+#### 文件类型：
+普通文件，目录文件，块特殊文件，字符特殊文件，套接字，FIFO，符号链接.
+文件类型信息包含在stat结构的st_mode成员中,可以用如下的宏确定文件类型,这些宏是stat结构中st_mode的成员
+
+S_ISREG();
+
+S_ISDIR();
+
+S_ISBLK();
+
+S_ISCHR();
+
+S_ISSOCK();
+
+S_ISFIFO();
+
+S_ISLNK();
+
+#### 返回说明：
+成功执行时，返回0。失败返回-1，errno被设为以下的某个值
+EBADF： 文件描述词无效
+EFAULT： 地址空间不可访问
+ELOOP： 遍历路径时遇到太多的符号连接
+ENAMETOOLONG：文件路径名太长
+ENOENT：路径名的部分组件不存在，或路径名是空字串
+ENOMEM：内存不足
+ENOTDIR：路径名的部分组件不是目录
+
+### 拼接路径
+snprintf：格式化输出字符串，并将结果写入到指定的缓冲区
+```
+int snprintf ( char * str, size_t size, const char * format, ... );
+```
+char * str:目标地址；
+size_t size：限定长度；
+const char * format：格式化
+...:来源，依旧指针
