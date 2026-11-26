@@ -2,11 +2,17 @@
 #include<dirent.h>//打开、读取、关闭文件
 #include<string.h>//strcpy（目标，来源），搬运字符串，带'\0'；对比memcpy（目标，来源，字节数）,不带'\0'
 #include<stdlib.h>//用strbuf了，realloc之类的
+#include<time.h>
+#include<sys/types.h>//很多类型
+#include<sys/stat.h>//定义struct stat和其他文件类型的宏
+#include<unistd.h>
+#include<limits.h>//防溢出，要用PATH_MAX(文件路径名的最大长度限制)
 //初始化什么呢？根据函数定义
     DIR *dir;//系统提前定义好的一个类型，代表"一个被打开的目录"的地址
     struct wenjian
     {
         char name[256];
+        struct stat shujv;
     };
     struct dirent *du;//#include<dirent.h>里面定义的，直接用,不能加新的类
     
@@ -20,7 +26,7 @@
     char d_name[256]; (文件名字符串)         
     };
     */
-   int a=0;
+   int a=0;//'.'开头的
    int l=0;
    int R=0;
    int t=0;
@@ -43,6 +49,7 @@
     }
     return alloc;
 }
+
 int main(int argc,char *argv[])
 {
     struct wenjian *wj=NULL;
@@ -72,18 +79,23 @@ int main(int argc,char *argv[])
     {
         return 1;
     }
-    while((du=readdir(dir))!=NULL)
+    while((du=readdir(dir))!=NULL)//现在本身就是打印全体的，需要在没有-a的时候隐藏隐藏文件
     {
+        if((a==0)&&(du->d_name[0]=='.'))
+        {
+            continue;
+        }
         alloc=strbuf_next_alloc(alloc,shu+1);
-        struct wenjian *newbuf = (struct wenjian *)realloc(wj,alloc*sizeof(*wj));//realloc(要被重新分配的内存块，分配大小字节数)
-                                                                                //分配大小字节数：个数（size_t)*sizeof(类型)
+        struct wenjian *newbuf = (struct wenjian *)realloc(wj,alloc*sizeof(struct wenjian));//realloc(要被重新分配的内存块，分配大小字节数)                                                                        //分配大小字节数：个数（size_t)*sizeof(类型)
         if (newbuf == NULL)
         {
             return 1;
         }
         wj=newbuf;
         strcpy(wj[shu].name,du->d_name);//可以把strbuf的动态扩容拿过来
-        
+        char qlujing[PATH_MAX];
+        snprintf (qlujing,sizeof(qlujing),"%s/%s",lujing,du->d_name);
+        lstat(qlujing,&wj[shu].shujv);//避免递归遇到链接循环//需要lujing+du->d_name//wj的第shu个盒子里面有一个小盒子的地址
         shu++;
     }
     closedir(dir);
